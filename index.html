@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <title>性格动物匹配测试 | 你的专属灵魂动物</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+        html {
+            font-size: calc(100vw / 375 * 16); /* 以375px设计稿为基准，适配不同屏幕 */
+        }
+        body {
+            background-color: #f7f9fc;
+            color: #333;
+            padding: 0.8rem;
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+        .container {
+            background: #fff;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 0.5rem 1.875rem rgba(0,0,0,0.04);
+            margin-bottom: 0.8rem;
+            width: 100%;
+        }
+        .question-page { display: block; }
+        .result-page { display: none; }
+
+        /* 进度条 */
+        .progress {
+            height: 0.375rem;
+            background: #f0f4f8;
+            border-radius: 0.1875rem;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            width: 100%;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #94d2e2;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* 题目 */
+        .question-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 1.75rem;
+            color: #2c3e50;
+            text-align: center;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        /* 选项 */
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.875rem;
+            width: 100%;
+        }
+        .option {
+            padding: 1rem 1.25rem;
+            background: #f9fbfd;
+            border-radius: 0.875rem;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            touch-action: manipulation; /* 优化移动端触摸 */
+            word-break: break-word;
+        }
+        .option:hover {
+            background: #f2f7fb;
+        }
+        .option.selected {
+            border-color: #94d2e2;
+            background: #eef7fc;
+            color: #3a9ccf;
+        }
+
+        /* 按钮 */
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.875rem;
+            width: 100%;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            background: #94d2e2;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            touch-action: manipulation;
+            min-width: 45%; /* 保证按钮最小宽度 */
+        }
+        .btn:disabled {
+            background: #e1e8ed;
+            cursor: not-allowed;
+        }
+        .next-btn {
+            background: #76d3c6;
+        }
+
+        /* 结果页 */
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 0.625rem;
+            word-break: break-word;
+        }
+        .result-sub {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 1.25rem;
+            font-size: 0.9375rem;
+        }
+
+        /* 核心动物结果（置顶+醒目+适配） */
+        .main-animal {
+            background: #f2f7fb;
+            border-radius: 1.25rem;
+            padding: 1.75rem 1.5rem;
+            margin-bottom: 1.75rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+        }
+        .animal-name-big {
+            font-size: 2.5rem; /* 响应式单位，小屏自动适配 */
+            font-weight: 700;
+            color: #3a9ccf;
+            margin-bottom: 0.25rem;
+            line-height: 1;
+        }
+        .animal-score-big {
+            font-size: 1.5rem;
+            color: #76d3c6;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .animal-desc-big {
+            font-size: 1rem;
+            color: #555;
+            line-height: 1.6;
+            max-width: 100%;
+            word-break: break-word;
+            padding: 0 0.5rem;
+        }
+
+        /* 性格维度（移到动物卡片下方+适配） */
+        .profile {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            text-align: center;
+            width: 100%;
+            padding: 0 0.5rem;
+        }
+        .profile-item {
+            width: 23%;
+        }
+        .profile-value {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #555;
+        }
+        .profile-label {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 0.25rem;
+        }
+
+        .restart-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #f2f7fb;
+            border: none;
+            border-radius: 0.875rem;
+            font-size: 1rem;
+            color: #3a9ccf;
+            cursor: pointer;
+            transition: background 0.2s;
+            touch-action: manipulation;
+        }
+        .restart-btn:hover {
+            background: #eef7fc;
+        }
+
+        /* 小屏手机适配（小于375px） */
+        @media screen and (max-width: 375px) {
+            html {
+                font-size: 14px;
+            }
+            .container {
+                padding: 1.5rem;
+            }
+            .animal-name-big {
+                font-size: 2.2rem;
+            }
+            .profile {
+                padding: 0;
+            }
+            .option {
+                padding: 0.9rem 1rem;
+            }
+        }
+
+        /* 大屏手机适配（大于428px） */
+        @media screen and (min-width: 428px) {
+            html {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container question-page" id="questionBox">
+    <div class="progress"><div class="progress-bar" id="bar"></div></div>
+    <div class="question-title" id="title"></div>
+    <div class="options" id="opts">
+        <div class="option" data-v="A" onclick="s(this)">A</div>
+        <div class="option" data-v="B" onclick="s(this)">B</div>
+        <div class="option" data-v="C" onclick="s(this)">C</div>
+        <div class="option" data-v="D" onclick="s(this)">D</div>
+    </div>
+    <div class="btn-group">
+        <button class="btn" id="prev" disabled onclick="p()">上一题</button>
+        <button class="btn next-btn" id="next" disabled onclick="n()">下一题</button>
+    </div>
+</div>
+
+<div class="container result-page" id="resultBox">
+    <div class="result-title">你的专属灵魂动物</div>
+    <div class="result-sub">根据你的性格维度精准匹配</div>
+
+    <!-- 核心动物结果（置顶，已移除图片） -->
+    <div class="main-animal" id="mainAnimal">
+        <div class="animal-name-big">牦牛</div>
+        <div class="animal-score-big">88%</div>
+        <div class="animal-desc-big">坚韧顽强，再难的环境也能坚持。</div>
+    </div>
+
+    <!-- 性格维度（移到下方） -->
+    <div class="profile">
+        <div class="profile-item">
+            <div class="profile-value" id="pA">0%</div>
+            <div class="profile-label">热烈</div>
+        </div>
+        <div class="profile-item">
+            <div class="profile-value" id="pB">0%</div>
+            <div class="profile-label">坚韧</div>
+        </div>
+        <div class="profile-item">
+            <div class="profile-value" id="pC">0%</div>
+            <div class="profile-label">温柔</div>
+        </div>
+        <div class="profile-item">
+            <div class="profile-value" id="pD">0%</div>
+            <div class="profile-label">清醒</div>
+        </div>
+    </div>
+
+    <button class="restart-btn" onclick="restart()">重新测试</button>
+</div>
+
+<script>
+// 30题题库
+const qs = [
+    {t:"朋友约你出门，你通常？",o:{A:"立刻答应，超兴奋",B:"先想想安排，再决定",C:"有点犹豫，但最后会去",D:"更喜欢宅着"}},
+    {t:"遇到压力，你会？",o:{A:"找人吐槽、倾诉",B:"自己解决，越忙越稳",C:"先躲一躲，缓一缓",D:"冷静分析，找方案"}},
+    {t:"你更像？",o:{A:"热闹中心，爱说话",B:"默默做事，靠谱担当",C:"温柔体贴，会照顾人",D:"独立清醒，不爱麻烦人"}},
+    {t:"周末你更爱？",o:{A:"聚会、逛街、出去玩",B:"学习、运动、提升自己",C:"宅家追剧、发呆、治愈",D:"一个人散步、发呆、思考"}},
+    {t:"别人对你第一印象多是？",o:{A:"阳光开朗",B:"稳重可靠",C:"温柔软萌",D:"神秘低调"}},
+    {t:"做决定时你？",o:{A:"凭感觉，快",B:"理性分析，稳",C:"容易纠结",D:"听内心，不后悔"}},
+    {t:"你更擅长？",o:{A:"带动气氛",B:"规划执行",C:"安慰别人",D:"独立思考"}},
+    {t:"你讨厌？",o:{A:"无聊、沉闷",B:"混乱、没计划",C:"争吵、冲突",D:"被束缚、被管"}},
+    {t:"你内心最渴望？",o:{A:"自由快乐",B:"成功认可",C:"温暖被爱",D:"平静安宁"}},
+    {t:"遇到喜欢的人，你会？",o:{A:"主动出击",B:"慢慢靠近，很负责",C:"害羞暗示",D:"观察很久才行动"}},
+    {t:"你更像哪种生活？",o:{A:"热烈奔放",B:"规律有序",C:"柔软治愈",D:"简约自由"}},
+    {t:"你处理矛盾的方式？",o:{A:"直接说开",B:"讲道理解决",C:"尽量回避",D:"冷处理，想清楚再说"}},
+    {t:"你更喜欢的环境？",o:{A:"热闹都市",B:"有序职场/校园",C:"温馨小家",D:"自然山野"}},
+    {t:"你对新事物的态度？",o:{A:"好奇，立刻试",B:"评估后再试",C:"有点害怕",D:"随缘，不追也不拒"}},
+    {t:"你更像？",o:{A:"小太阳",B:"定海神针",C:"小天使",D:"独行客"}},
+    {t:"你发脾气时？",o:{A:"来得快去得快",B:"克制，讲道理",C:"委屈不说",D:"沉默冷静"}},
+    {t:"你更看重？",o:{A:"开心体验",B:"目标成就",C:"关系情感",D:"自我空间"}},
+    {t:"你说话风格？",o:{A:"直接热情",B:"条理清晰",C:"温和委婉",D:"简洁少言"}},
+    {t:"你更容易被什么打动？",o:{A:"有趣、浪漫",B:"努力、坚持",C:"温柔、细节",D:"真诚、安静"}},
+    {t:"你在团队里是？",o:{A:"气氛组",B:"骨干主力",C:"协调安抚",D:"独立完成"}},
+    {t:"你更像？",o:{A:"敢闯敢冲",B:"踏实稳重",C:"柔软敏感",D:"清醒通透"}},
+    {t:"你对未来的态度？",o:{A:"乐观期待",B:"认真规划",C:"走一步看一步",D:"顺其自然"}},
+    {t:"你喜欢的礼物？",o:{A:"新奇好玩",B:"实用有质感",C:"温馨治愈",D:"简约高级"}},
+    {t:"你难过时会？",o:{A:"找人陪",B:"努力做事转移",C:"自己悄悄哭",D:"冷静消化"}},
+    {t:"你更像？",o:{A:"野生自由",B:"精英自律",C:"居家温柔",D:"佛系淡然"}},
+    {t:"你交朋友看重？",o:{A:"合得来、好玩",B:"靠谱、人品好",C:"温柔、相处舒服",D:"懂边界、不粘人"}},
+    {t:"你面对挑战？",o:{A:"兴奋迎战",B:"认真准备",C:"有点害怕但坚持",D:"冷静应对"}},
+    {t:"你更适合？",o:{A:"变化多的生活",B:"有目标的生活",C:"安稳温暖的生活",D:"简单自由的生活"}},
+    {t:"你外表和内心？",o:{A:"外表热，内心也热",B:"外表稳，内心要强",C:"外表软，内心敏感",D:"外表冷，内心温柔"}},
+    {t:"用一个词形容自己？",o:{A:"热烈",B:"坚韧",C:"温柔",D:"自由"}}
+];
+
+// 120只动物数据（已移除头像字段）
+const animals = {
+    A: [
+        {n:"狮子",d:"天生自带气场，不刻意讨好，却总能成为焦点。"},
+        {n:"老虎",d:"敢想敢冲，有野心也有担当，认准的事绝不回头。"},
+        {n:"猎豹",d:"行动力拉满，干脆利落，不拖泥带水。"},
+        {n:"红袋鼠",d:"乐观向上，越跳越勇，自带向前冲的能量。"},
+        {n:"非洲野犬",d:"重情重义，团队里最靠谱的热血担当。"},
+        {n:"金刚鹦鹉",d:"鲜活有趣，走到哪，热闹就跟到哪。"},
+        {n:"火烈鸟",d:"优雅又张扬，活得漂亮，也活得自我。"},
+        {n:"海狮",d:"聪明灵动，爱玩会闹，也很有分寸。"},
+        {n:"斑马",d:"独特不盲从，有自己的节奏和态度。"},
+        {n:"长颈鹿",d:"看得远、格局大，温柔又有力量。"},
+        {n:"河马",d:"外表粗犷，内心温柔，安全感爆棚。"},
+        {n:"美洲豹",d:"神秘又强大，低调但实力藏不住。"},
+        {n:"棕熊",d:"沉稳可靠，关键时刻能扛事、能保护人。"},
+        {n:"狼",d:"有野性有原则，忠诚且清醒，不轻易妥协。"},
+        {n:"雕",d:"志在高空，眼光锐利，不甘于平凡。"},
+        {n:"隼",d:"果断迅猛，目标明确，一击即中。"},
+        {n:"鲨鱼",d:"内心强大，越挑战越兴奋，从不畏惧风浪。"},
+        {n:"海豚",d:"温暖治愈，聪明灵动，自带好人缘。"},
+        {n:"马",d:"自由奔放，真诚坦荡，一生向往远方。"},
+        {n:"斗牛犬",d:"倔强又勇敢，认定了就坚持到底。"},
+        {n:"猩猩",d:"智商在线，重感情，有自己的小坚持。"},
+        {n:"狒狒",d:"机灵外向，敢表达也敢争取。"},
+        {n:"犀鸟",d:"专一长情，认定一个人就很坚定。"},
+        {n:"巨嘴鸟",d:"个性鲜明，色彩明亮，活得很耀眼。"},
+        {n:"鳄鱼",d:"冷静蛰伏，耐心等待，一击制胜。"},
+        {n:"科莫多龙",d:"气场强大，不怒自威，自带压迫感。"},
+        {n:"野牛",d:"踏实勇猛，一步一个脚印向前走。"},
+        {n:"羚羊",d:"敏捷灵动，反应快，总能避开困境。"},
+        {n:"鸵鸟",d:"看似大大咧咧，其实内心很通透。"},
+        {n:"企鹅",d:"呆萌又执着，认真生活，认真爱。"}
+    ],
+    B: [
+        {n:"大象",d:"温和有力量，靠谱又稳重，是身边的定心丸。"},
+        {n:"水牛",d:"勤勤恳恳，默默耕耘，从不抱怨。"},
+        {n:"骆驼",d:"耐得住寂寞，扛得住压力，走得远也走得稳。"},
+        {n:"牦牛",d:"坚韧顽强，再难的环境也能坚持。"},
+        {n:"猫头鹰",d:"清醒理智，看透不说透，低调有智慧。"},
+        {n:"鹰",d:"目光长远，有规划有格局，不慌不忙。"},
+        {n:"蟒蛇",d:"沉稳内敛，蓄力前行，厚积薄发。"},
+        {n:"鳄龟",d:"内心坚硬，外表淡定，安全感十足。"},
+        {n:"海象",d:"踏实可靠，关键时刻能扛能守。"},
+        {n:"白犀牛",d:"温和强大，不惹事也不怕事。"},
+        {n:"黑熊",d:"低调务实，内心强大，默默努力。"},
+        {n:"野猪",d:"生命力顽强，敢闯敢拼，不服输。"},
+        {n:"河狸",d:"规划力强，动手能力一流，认真生活。"},
+        {n:"蜜獾",d:"硬核倔强，无所畏惧，认准就不放弃。"},
+        {n:"穿山甲",d:"温柔又坚韧，有自己的保护壳。"},
+        {n:"犰狳",d:"谨慎细心，懂得保护自己，也温柔待人。"},
+        {n:"驴",d:"踏实认真，一步一个脚印，从不投机取巧。"},
+        {n:"骡子",d:"吃苦耐劳，责任心强，让人放心。"},
+        {n:"信天翁",d:"长情专一，能跨越山海，坚守初心。"},
+        {n:"军舰鸟",d:"目标清晰，执行力强，从不半途而废。"},
+        {n:"石斑鱼",d:"低调沉稳，深藏实力，不轻易显露。"},
+        {n:"龙虾",d:"越磨砺越强大，慢慢成长，步步蜕变。"},
+        {n:"寄居蟹",d:"谨慎温柔，有安全感，也懂依赖。"},
+        {n:"锹甲",d:"外表坚硬，内心执着，有担当。"},
+        {n:"独角仙",d:"踏实努力，默默积蓄力量。"},
+        {n:"驯鹿",d:"温和可靠，陪伴长久，不离不弃。"},
+        {n:"山羊",d:"坚韧向上，再陡峭的路也能攀登。"},
+        {n:"工蜂",d:"勤劳认真，默默付出，有责任感。"},
+        {n:"海胆",d:"外表带刺，内心柔软，有自己的坚持。"},
+        {n:"牡蛎",d:"历经磨砺，终成珍珠，沉稳有价值。"}
+    ],
+    C: [
+        {n:"熊猫",d:"软萌治愈，不争不抢，自带温柔气场。"},
+        {n:"考拉",d:"慵懒温柔，慢节奏生活，治愈身边所有人。"},
+        {n:"水獭",d:"软萌可爱，喜欢牵手拥抱，内心超温暖。"},
+        {n:"小鹿",d:"温柔灵动，干净纯粹，让人忍不住呵护。"},
+        {n:"松鼠",d:"机灵可爱，认真生活，收集小美好。"},
+        {n:"兔子",d:"温柔敏感，内心柔软，善良又真诚。"},
+        {n:"小熊猫",d:"软萌治愈，可爱又害羞，让人一眼心动。"},
+        {n:"狐獴",d:"警觉又温柔，会照顾同伴，很有爱心。"},
+        {n:"海豹",d:"呆萌软乎乎，简单纯粹，快乐很容易。"},
+        {n:"海獭",d:"温柔长情，喜欢陪伴，超会撒娇。"},
+        {n:"金丝猴",d:"灵动温柔，聪明乖巧，气质干净。"},
+        {n:"豚鼠",d:"温顺软萌，不吵不闹，安静治愈。"},
+        {n:"羊驼",d:"温柔呆萌，脾气超好，治愈一切不开心。"},
+        {n:"奶牛",d:"温和踏实，默默付出，温柔又包容。"},
+        {n:"小猫",d:"温柔独立，会撒娇也会安静陪伴。"},
+        {n:"温顺小狗",d:"忠诚温柔，满眼是你，用心陪伴。"},
+        {n:"孔雀",d:"优雅美丽，温柔自信，自带光芒。"},
+        {n:"蝴蝶",d:"轻盈美好，温柔蜕变，活得精致。"},
+        {n:"金鱼",d:"简单快乐，温柔安静，治愈人心。"},
+        {n:"七彩神仙鱼",d:"温柔优雅，内心细腻，气质干净。"},
+        {n:"天鹅",d:"高贵温柔，纯洁优雅，长情专一。"},
+        {n:"鸽子",d:"温和和平，温柔善良，带来希望。"},
+        {n:"夜莺",d:"温柔细腻，默默发光，治愈人心。"},
+        {n:"啄木鸟",d:"细心温柔，默默守护，很会照顾人。"},
+        {n:"瓢虫",d:"小巧可爱，带来好运，温柔又阳光。"},
+        {n:"萤火虫",d:"微弱却温暖，在黑暗里默默发光。"},
+        {n:"绵羊",d:"温顺柔软，善良无害，让人安心。"},
+        {n:"龙猫",d:"软萌治愈，安静温柔，超贴心。"},
+        {n:"刺猬",d:"外表带刺，内心柔软，温柔又敏感。"},
+        {n:"小海豚",d:"聪明温柔，爱笑爱闹，治愈力满分。"}
+    ],
+    D: [
+        {n:"狐狸",d:"聪明通透，懂人情世故，也守得住自我。"},
+        {n:"孤傲狼",d:"独立清醒，有原则，不迎合不将就。"},
+        {n:"豹子",d:"独来独往，实力强大，低调又神秘。"},
+        {n:"猞猁",d:"冷静敏锐，不喜喧闹，专注自己的世界。"},
+        {n:"云豹",d:"神秘优雅，低调内敛，深藏不露。"},
+        {n:"雪豹",d:"高冷独立，生于高处，不与世俗争。"},
+        {n:"猫头鹰",d:"清醒理智，看透本质，安静有智慧。"},
+        {n:"苍鹰",d:"自由孤傲，志在远方，不被束缚。"},
+        {n:"游隼",d:"冷静果断，独来独往，目标清晰。"},
+        {n:"海龟",d:"慢而坚定，通透从容，一生自在。"},
+        {n:"章鱼",d:"智商超高，内心丰富，低调有城府。"},
+        {n:"乌贼",d:"灵活通透，懂得变通，不硬碰硬。"},
+        {n:"水母",d:"温柔自由，随遇而安，不被定义。"},
+        {n:"海马",d:"温柔独特，专一长情，安静自在。"},
+        {n:"海龙",d:"神秘优雅，低调自在，不随波逐流。"},
+        {n:"变色龙",d:"通透清醒，适应力强，守住本心。"},
+        {n:"壁虎",d:"冷静独立，断舍离果断，自愈力强。"},
+        {n:"树懒",d:"慢生活，慢热爱，清醒又佛系。"},
+        {n:"考拉",d:"慵懒通透，不爱争抢，自得其乐。"},
+        {n:"穿山甲",d:"温柔独立，有保护壳，也有柔软心。"},
+        {n:"食蚁兽",d:"专注自我，不喜打扰，安静生活。"},
+        {n:"鸭嘴兽",d:"独特小众，不被定义，自在随心。"},
+        {n:"袋熊",d:"沉稳佛系，慢热踏实，内心通透。"},
+        {n:"蝙蝠",d:"神秘清醒，昼伏夜出，自有天地。"},
+        {n:"燕子",d:"自由灵动，来去自如，不被牵绊。"},
+        {n:"乌鸦",d:"聪明清醒，不看表面，看透本质。"},
+        {n:"白鹭",d:"优雅孤傲，干净淡然，自在如风。"},
+        {n:"苍鹭",d:"冷静耐心，独站一隅，等待属于自己的时机。"},
+        {n:"锦鲤",d:"温柔自在，心态平和，自带好运。"},
+        {n:"独立猫",d:"高冷温柔，有边界感，爱与自由都要。"}
+    ]
+};
+
+let cur = 0;
+let ans = {};
+let sel = null;
+
+// 加载题目
+function load(i) {
+    const q = qs[i];
+    title.innerText = (i+1)+". "+q.t;
+    const os = opts.querySelectorAll(".option");
+    os[0].textContent = "A. "+q.o.A;
+    os[1].textContent = "B. "+q.o.B;
+    os[2].textContent = "C. "+q.o.C;
+    os[3].textContent = "D. "+q.o.D;
+    os.forEach(o=>o.classList.remove("selected"));
+    sel = null;
+    next.disabled = true;
+    
+    // 恢复已选答案
+    if (ans[i]) {
+        const t = [...os].find(x=>x.dataset.v===ans[i]);
+        if (t) { 
+            t.classList.add("selected"); 
+            sel = ans[i]; 
+            next.disabled = false; 
+        }
+    }
+    
+    // 控制上一题按钮状态
+    prev.disabled = i === 0;
+    // 更新进度条
+    bar.style.width = ((i+1)/qs.length*100)+"%";
+}
+
+// 选择选项
+function s(el) {
+    opts.querySelectorAll(".option").forEach(o=>o.classList.remove("selected"));
+    el.classList.add("selected");
+    sel = el.dataset.v;
+    next.disabled = false;
+}
+
+// 上一题
+function p() { 
+    if(cur > 0) {
+        ans[cur] = sel;
+        cur--;
+        load(cur);
+    }
+}
+
+// 下一题/提交
+function n() { 
+    ans[cur] = sel; 
+    if(cur === qs.length - 1) {
+        calc();
+        return;
+    }
+    cur++; 
+    load(cur); 
+}
+
+// 核心计算逻辑（单结果+保底60%以上）
+function calc() {
+    // 1. 计算各维度得分
+    const count = {A:0, B:0, C:0, D:0};
+    const totalQuestions = qs.length;
+    
+    // 统计每个维度的选择次数（兜底处理，防止未选）
+    for(let i = 0; i < totalQuestions; i++) {
+        const val = ans[i] || "A";
+        count[val]++;
+    }
+    
+    // 计算百分比
+    const scores = {
+        A: Math.round((count.A / totalQuestions) * 100),
+        B: Math.round((count.B / totalQuestions) * 100),
+        C: Math.round((count.C / totalQuestions) * 100),
+        D: Math.round((count.D / totalQuestions) * 100)
+    };
+
+    // 更新性格维度显示
+    document.getElementById("pA").innerText = scores.A + "%";
+    document.getElementById("pB").innerText = scores.B + "%";
+    document.getElementById("pC").innerText = scores.C + "%";
+    document.getElementById("pD").innerText = scores.D + "%";
+
+    // 2. 找到最高维度
+    let maxType = "A";
+    let maxScore = scores.A;
+    for(const type of ["B", "C", "D"]) {
+        if(scores[type] > maxScore) {
+            maxScore = scores[type];
+            maxType = type;
+        }
+    }
+
+    // 3. 从最高维度中随机选一个动物
+    const typeAnimals = animals[maxType];
+    const randomIndex = Math.floor(Math.random() * typeAnimals.length);
+    const selectedAnimal = typeAnimals[randomIndex];
+
+    // 4. 生成60-98%之间的匹配度（保证>60%）
+    const matchScore = 60 + Math.floor(Math.random() * 39); // 60-98随机数
+
+    // 5. 渲染核心动物结果（已移除图片）
+    const mainAnimalEl = document.getElementById("mainAnimal");
+    mainAnimalEl.innerHTML = `
+        <div class="animal-name-big">${selectedAnimal.n}</div>
+        <div class="animal-score-big">${matchScore}%</div>
+        <div class="animal-desc-big">${selectedAnimal.d}</div>
+    `;
+
+    // 显示结果页，隐藏答题页
+    document.getElementById("questionBox").style.display = "none";
+    document.getElementById("resultBox").style.display = "block";
+}
+
+// 重新测试
+function restart() {
+    cur = 0;
+    ans = {};
+    sel = null;
+    document.getElementById("resultBox").style.display = "none";
+    document.getElementById("questionBox").style.display = "block";
+    load(0);
+}
+
+// 页面加载初始化
+window.addEventListener("load", () => {
+    load(0);
+});
+</script>
+</body>
+</html>
